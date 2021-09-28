@@ -13,9 +13,9 @@
   "devDependencies": {
     "@openzeppelin/contracts": "^4.3.2",
     "chai": "4.3.4",
-    "hardhat": "2.6.4"
+    "hardhat": "2.6.4",
+    "npx": "^10.2.2"
   },
   "dependencies": {
-    "npx": "^10.2.2"
   }
 }
