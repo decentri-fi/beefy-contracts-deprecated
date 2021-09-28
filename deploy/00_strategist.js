@@ -6,7 +6,6 @@ module.exports = async ({
 
     const {deploy, log} = deployments
     const {deployer} = await getNamedAccounts()
-    const chainId = await getChainId()
 
     const want = "0x40a5df3e37152d4daf279e0450289af76472b02e"; // the LP //TODO: correct LP
     const rewardPool = "0x346c9e501adc38f1f325cc0c2d44c325283eeaf1"; //todo: correct reward pool
