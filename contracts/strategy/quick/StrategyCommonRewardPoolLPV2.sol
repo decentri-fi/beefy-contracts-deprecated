@@ -1,17 +1,17 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "../BIFI/strategies/common/StratManager.sol";
-import "../BIFI/strategies/common/FeeManager.sol";
+import "../../BIFI/strategies/common/StratManager.sol";
+import "../../BIFI/strategies/common/FeeManager.sol";
 
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../uniswap/IUniswapV2Router01.sol";
-import "../BIFI/interfaces/common/IRewardPool.sol";
-import "../BIFI/interfaces/common/IDragonsLair.sol";
-import "../BIFI/interfaces/common/IUniswapV2Pair.sol";
+import "../../uniswap/IUniswapV2Router01.sol";
+import "../../BIFI/interfaces/common/IRewardPool.sol";
+import "../../BIFI/interfaces/common/IDragonsLair.sol";
+import "../../BIFI/interfaces/common/IUniswapV2Pair.sol";
 
 
 contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
