@@ -8,6 +8,7 @@ require('dotenv').config()
 
 const POLYGON_MAINNET_RPC_URL = process.env.POLYGON_MAINNET_RPC_URL || "https://polygon-rpc.com"
 const MNEMONIC = process.env.MNEMONIC || "your mnemonic"
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "your private key"
 
 
 /**
