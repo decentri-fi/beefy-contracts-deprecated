@@ -1,4 +1,4 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "../BIFI/strategies/common/StratManager.sol";
@@ -111,7 +111,7 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
         }
     }
 
-    function harvest() external whenNotPaused onlyEOA {
+    function harvest() external whenNotPaused {
         _harvest();
     }
 
@@ -121,21 +121,22 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
 
     // compounds earnings and charges performance fee
     function _harvest() internal {
-        require(tx.origin == msg.sender || msg.sender == vault, "!contract");
-
         claimRewards();
-        chargeFees();
-        addLiquidity();
-        deposit();
+        uint256 outputBal = IERC20(output).balanceOf(address(this));
+        if (outputBal > 0) {
+            chargeFees();
+            addLiquidity();
+            deposit();
 
-        lastHarvest = block.timestamp;
-        emit StratHarvest(msg.sender);
+            lastHarvest = block.timestamp;
+            emit StratHarvest(msg.sender);
+        }
     }
 
     function claimRewards() internal {
         IRewardPool(rewardPool).getReward();
-        IDragonsLair lair = IDragonsLair(dragonsLair);
-        lair.leave(lair.balanceOf(address(this)));
+        uint256 lairBal = IERC20(dragonsLair).balanceOf(address(this));
+        IDragonsLair(dragonsLair).leave(lairBal);
     }
 
     // performance fees
@@ -259,6 +260,13 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
 
     // returns rewards unharvested
     function rewardsAvailable() public view returns (uint256) {
-        return IRewardPool(rewardPool).earned(address(this));
+        uint256 lairReward = IRewardPool(rewardPool).earned(address(this))
+        return IDragonsLair(dragonsLair).dQUICKForQUICK(lairReward);
+    }
+    
+    function callReward() public view returns (uint256) {
+        uint256 outputBal = rewardsAvailable();
+        uint256[] memory amountsOut = IUniswapRouterETH(unirouter).getAmountsOut(outputBal, outputToNativeRoute);
+        return amountsOut[amountsOut.length - 1].mul(45).div(1000).mul(callFee).div(MAX_FEE);
     }
 }
