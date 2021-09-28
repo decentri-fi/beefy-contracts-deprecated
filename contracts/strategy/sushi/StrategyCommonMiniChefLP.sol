@@ -130,11 +130,13 @@ contract StrategyCommonMiniChefLP is StratManager, FeeManager {
 
     // compounds earnings and charges performance fee
     function _harvest() internal {
-        require(tx.origin == msg.sender || msg.sender == vault, "!contract");
         IMiniChefV2(chef).harvest(poolId, address(this));
-        chargeFees();
-        addLiquidity();
-        deposit();
+        uint256 outputBal = IERC20(output).balanceOf(address(this));
+        if(outputBal > 0) {
+            chargeFees();
+            addLiquidity();
+            deposit();
+        }
 
         lastHarvest = block.timestamp;
         emit StratHarvest(msg.sender);
@@ -234,7 +236,7 @@ contract StrategyCommonMiniChefLP is StratManager, FeeManager {
         _giveAllowances();
 
         deposit();
-    }vault
+    }
 
     function _giveAllowances() internal {
         IERC20(want).safeApprove(chef, type(uint256).max);
