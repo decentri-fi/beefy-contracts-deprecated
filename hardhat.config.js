@@ -1,18 +1,21 @@
-const MNEMONIC_PATH = "m/44'/60'/0'/0";
-const MNEMONIC = process.env.MNEMONIC || '';
-const DEFAULT_BLOCK_GAS_LIMIT = 10000000;
-const DEFAULT_GAS_PRICE = 5000000000;
-const DEFAULT_GAS_MUL = 1;
+require("./tasks/accounts")
+require("@nomiclabs/hardhat-waffle")
+require("@nomiclabs/hardhat-ethers")
+require("@nomiclabs/hardhat-truffle5")
+require("@nomiclabs/hardhat-etherscan")
+require("hardhat-deploy")
 
+require('dotenv').config()
 
-const mainnetFork =  {
-    url: 'https://bsc-dataseed.binance.org'
-};
+const POLYGON_MAINNET_RPC_URL = process.env.POLYGON_MAINNET_RPC_URL || "https://polygon-rpc.com"
+const MNEMONIC = process.env.MNEMONIC || "your mnemonic"
+
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+    defaultNetwork: "hardhat",
     solidity: {
         compilers: [
             {
@@ -20,15 +23,26 @@ module.exports = {
             }
         ]
     },
+    namedAccounts: {
+        deployer: {
+            default: 0, // here this will by default take the first account as deployer
+            1: 0 // similarly on mainnet it will take the first account as deployer. Note though that depending on how hardhat network are configured, the account 0 on one network can be different than on another
+        },
+    },
     networks: {
         hardhat: {
-            hardfork: 'istanbul',
-            blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
-            gas: DEFAULT_BLOCK_GAS_LIMIT,
-            gasPrice: 8000000000,
-            throwOnTransactionFailures: true,
-            throwOnCallFailures: true,
-            forking: mainnetFork,
+
+        },
+        ganache: {
+            url: 'http://localhost:8545',
+            accounts: {
+                mnemonic: MNEMONIC,
+            }
+        },
+        polygon: {
+            url: POLYGON_MAINNET_RPC_URL,
+            accounts: [PRIVATE_KEY],
+            saveDeployments: true,
         },
     },
     mocha: {
