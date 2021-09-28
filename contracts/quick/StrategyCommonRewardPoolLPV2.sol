@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "../BIFI/strategies/common/StratManager.sol";
@@ -8,9 +8,9 @@ import "../BIFI/strategies/common/FeeManager.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "../uniswap/IUniswapV2Router01.sol";
 import "../BIFI/interfaces/common/IRewardPool.sol";
 import "../BIFI/interfaces/common/IDragonsLair.sol";
-import "../BIFI/interfaces/common/IUniswapRouterETH.sol";
 import "../BIFI/interfaces/common/IUniswapV2Pair.sol";
 
 
@@ -142,7 +142,7 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
     // performance fees
     function chargeFees() internal {
         uint256 toNative = IERC20(output).balanceOf(address(this)).mul(45).div(1000);
-        IUniswapRouterETH(unirouter).swapExactTokensForTokens(toNative, 0, outputToNativeRoute, address(this), block.timestamp);
+        IUniswapV2Router01(unirouter).swapExactTokensForTokens(toNative, 0, outputToNativeRoute, address(this), block.timestamp);
 
         uint256 nativeBal = IERC20(native).balanceOf(address(this));
 
@@ -161,16 +161,16 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
         uint256 outputHalf = IERC20(output).balanceOf(address(this)).div(2);
 
         if (lpToken0 != output) {
-            IUniswapRouterETH(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp0Route, address(this), block.timestamp);
+            IUniswapV2Router01(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp0Route, address(this), block.timestamp);
         }
 
         if (lpToken1 != output) {
-            IUniswapRouterETH(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp1Route, address(this), block.timestamp);
+            IUniswapV2Router01(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp1Route, address(this), block.timestamp);
         }
 
         uint256 lp0Bal = IERC20(lpToken0).balanceOf(address(this));
         uint256 lp1Bal = IERC20(lpToken1).balanceOf(address(this));
-        IUniswapRouterETH(unirouter).addLiquidity(lpToken0, lpToken1, lp0Bal, lp1Bal, 1, 1, address(this), block.timestamp);
+        IUniswapV2Router01(unirouter).addLiquidity(lpToken0, lpToken1, lp0Bal, lp1Bal, 1, 1, address(this), block.timestamp);
     }
 
     // calculate the total underlaying 'want' held by the strat.
@@ -260,13 +260,13 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
 
     // returns rewards unharvested
     function rewardsAvailable() public view returns (uint256) {
-        uint256 lairReward = IRewardPool(rewardPool).earned(address(this))
+        uint256 lairReward = IRewardPool(rewardPool).earned(address(this));
         return IDragonsLair(dragonsLair).dQUICKForQUICK(lairReward);
     }
     
     function callReward() public view returns (uint256) {
         uint256 outputBal = rewardsAvailable();
-        uint256[] memory amountsOut = IUniswapRouterETH(unirouter).getAmountsOut(outputBal, outputToNativeRoute);
+        uint256[] memory amountsOut = IUniswapV2Router01(unirouter).getAmountsOut(outputBal, outputToNativeRoute);
         return amountsOut[amountsOut.length - 1].mul(45).div(1000).mul(callFee).div(MAX_FEE);
     }
 }
