@@ -1,4 +1,4 @@
-pragma solidity ^0.6.12;
+pragma solidity 0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "../BIFI/strategies/common/StratManager.sol";
@@ -8,11 +8,17 @@ import "../BIFI/strategies/common/FeeManager.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "../BIFI/interfaces/common/IRewardPool.sol";
+import "../BIFI/interfaces/common/IDragonsLair.sol";
+import "../BIFI/interfaces/common/IUniswapRouterETH.sol";
+import "../BIFI/interfaces/common/IUniswapV2Pair.sol";
 
 
 contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+
+    uint256 public MAX_INT = 2 ** 256 - 1;
 
     // Tokens used
     address public native;
@@ -23,6 +29,7 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
 
     // Third party contracts
     address public rewardPool;
+    address constant public dragonsLair = address(0xf28164A485B0B2C90639E47b0f377b4a438a16B1);
 
     // Routes
     address[] public outputToNativeRoute;
@@ -115,9 +122,8 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
     // compounds earnings and charges performance fee
     function _harvest() internal {
         require(tx.origin == msg.sender || msg.sender == vault, "!contract");
-        IRewardPool(rewardPool).getReward();
-        IDragonsLair(dragonsLair).leave(ERC20.balanceOf(address(this)));
 
+        claimRewards();
         chargeFees();
         addLiquidity();
         deposit();
@@ -126,10 +132,16 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
         emit StratHarvest(msg.sender);
     }
 
+    function claimRewards() internal {
+        IRewardPool(rewardPool).getReward();
+        IDragonsLair lair = IDragonsLair(dragonsLair);
+        lair.leave(lair.balanceOf(address(this)));
+    }
+
     // performance fees
     function chargeFees() internal {
         uint256 toNative = IERC20(output).balanceOf(address(this)).mul(45).div(1000);
-        IUniswapRouterETH(unirouter).swapExactTokensForTokens(toNative, 0, outputToNativeRoute, address(this), now);
+        IUniswapRouterETH(unirouter).swapExactTokensForTokens(toNative, 0, outputToNativeRoute, address(this), block.timestamp);
 
         uint256 nativeBal = IERC20(native).balanceOf(address(this));
 
@@ -148,16 +160,16 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
         uint256 outputHalf = IERC20(output).balanceOf(address(this)).div(2);
 
         if (lpToken0 != output) {
-            IUniswapRouterETH(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp0Route, address(this), now);
+            IUniswapRouterETH(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp0Route, address(this), block.timestamp);
         }
 
         if (lpToken1 != output) {
-            IUniswapRouterETH(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp1Route, address(this), now);
+            IUniswapRouterETH(unirouter).swapExactTokensForTokens(outputHalf, 0, outputToLp1Route, address(this), block.timestamp);
         }
 
         uint256 lp0Bal = IERC20(lpToken0).balanceOf(address(this));
         uint256 lp1Bal = IERC20(lpToken1).balanceOf(address(this));
-        IUniswapRouterETH(unirouter).addLiquidity(lpToken0, lpToken1, lp0Bal, lp1Bal, 1, 1, address(this), now);
+        IUniswapRouterETH(unirouter).addLiquidity(lpToken0, lpToken1, lp0Bal, lp1Bal, 1, 1, address(this), block.timestamp);
     }
 
     // calculate the total underlaying 'want' held by the strat.
@@ -228,14 +240,14 @@ contract StrategyCommonRewardPoolLPV2 is StratManager, FeeManager {
     }
 
     function _giveAllowances() internal {
-        IERC20(want).safeApprove(rewardPool, uint256(-1));
-        IERC20(output).safeApprove(unirouter, uint256(-1));
+        IERC20(want).safeApprove(rewardPool, MAX_INT);
+        IERC20(output).safeApprove(unirouter, MAX_INT);
 
         IERC20(lpToken0).safeApprove(unirouter, 0);
-        IERC20(lpToken0).safeApprove(unirouter, uint256(-1));
+        IERC20(lpToken0).safeApprove(unirouter, MAX_INT);
 
         IERC20(lpToken1).safeApprove(unirouter, 0);
-        IERC20(lpToken1).safeApprove(unirouter, uint256(-1));
+        IERC20(lpToken1).safeApprove(unirouter, MAX_INT);
     }
 
     function _removeAllowances() internal {

@@ -1,4 +1,6 @@
-pragma solidity ^0.6.12;
+pragma solidity 0.8.0;
+
+import "./StratManager.sol";
 
 abstract contract FeeManager is StratManager {
     uint constant public STRATEGIST_FEE = 112;
