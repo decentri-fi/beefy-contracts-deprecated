@@ -234,7 +234,7 @@ contract StrategyCommonMiniChefLP is StratManager, FeeManager {
         _giveAllowances();
 
         deposit();
-    }
+    }vault
 
     function _giveAllowances() internal {
         IERC20(want).safeApprove(chef, type(uint256).max);

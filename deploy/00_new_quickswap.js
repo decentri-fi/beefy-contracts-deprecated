@@ -4,7 +4,7 @@ module.exports = async ({
                             getChainId
                         }) => {
 
-    const {deploy, log} = deployments
+    const {deploy, log,  get} = deployments
     const {deployer} = await getNamedAccounts()
 
     const want = "0x40a5df3e37152d4daf279e0450289af76472b02e"; // the LP //TODO: correct LP
@@ -43,6 +43,29 @@ module.exports = async ({
         ],
         log: true
     })
+    log("-----------------------STRAT-----------------------------")
+
+    log("-----------------------VAULT-----------------------------")
+    let strategy = await get('StrategyCommonRewardPoolLPV2');
+
+
+    const approvalDelay = 21600;
+    const lp0 = "USDC";
+    const lp1 = "BNB"
+    const name = `Moo Quick ${lp0}-${lp1}`
+    const symbol  = `mooQuick${lp0}-${lp1}`
+
+    const BeefyVaultV6 = await deploy('BeefyVaultV6', {
+        from: deployer,
+        args: [
+            strategy.address,
+            name,
+            symbol,
+            approvalDelay
+        ],
+        log: true
+    })
+
     log("----------------------------------------------------")
 
 }
